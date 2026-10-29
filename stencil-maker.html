@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stencil Maker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFEEF3; --panel:#FFFFFF; --ink:#211D33; --muted:#5E5873; --line:#DAD7E3;
+  --violet:#5A3FD6; --violet-ink:#FFFFFF; --violet-soft:#ECE8FB; --stage:#E2E0E9;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#16141D; --panel:#201D2A; --ink:#ECEAF3; --muted:#A49EB9; --line:#38344B;
+    --violet:#9C88FF; --violet-ink:#16141D; --violet-soft:#2C2645; --stage:#100F15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#16141D; --panel:#201D2A; --ink:#ECEAF3; --muted:#A49EB9; --line:#38344B;
+  --violet:#9C88FF; --violet-ink:#16141D; --violet-soft:#2C2645; --stage:#100F15;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;height:100%;background:var(--paper);color:var(--ink);
+  font-family:Barlow, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+.app{display:grid;grid-template-columns:minmax(300px,370px) 1fr;height:100%}
+.panel{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:22px 20px 40px}
+.stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:16px 20px 20px;background:var(--stage);overflow:auto;min-width:0}
+h1{font-family:"Barlow Semi Condensed","Arial Narrow",Barlow,sans-serif;font-weight:700;font-size:2rem;line-height:1;margin:0 0 4px;letter-spacing:-0.01em}
+.sub{margin:0 0 18px;color:var(--muted);font-size:.95rem}
+h2{font-family:"Barlow Semi Condensed","Arial Narrow",Barlow,sans-serif;font-weight:600;font-size:1.1rem;margin:0 0 10px}
+section{padding:16px 0;border-top:1px solid var(--line)}
+.upload{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:12px;
+  background:var(--violet);color:var(--violet-ink);font-weight:600;font-size:1.05rem;cursor:pointer;margin-bottom:14px}
+.upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.upload:focus-within{outline:3px solid var(--ink);outline-offset:2px}
+.suggest{background:var(--violet-soft);border-radius:10px;padding:10px 12px;font-size:.92rem;margin-bottom:14px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mode{appearance:none;border:2px solid var(--line);background:transparent;color:var(--ink);border-radius:12px;
+  padding:10px 6px 9px;cursor:pointer;font:inherit;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.mode svg{width:40px;height:40px}
+.mode b{font-family:"Barlow Semi Condensed","Arial Narrow",Barlow,sans-serif;font-weight:600;font-size:1rem}
+.mode[aria-checked="true"]{border-color:var(--violet);background:var(--violet-soft)}
+.mode:focus-visible,.seg button:focus-visible,.tbtn:focus-visible,.linkbtn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.mode .tag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--violet);color:var(--violet-ink);
+  font-size:.7rem;font-weight:600;padding:1px 7px;border-radius:8px;white-space:nowrap}
+.modedesc{margin:10px 0 6px;font-size:.9rem;color:var(--muted)}
+.linkbtn{appearance:none;background:none;border:0;padding:4px 0;color:var(--violet);font:inherit;font-weight:600;font-size:.9rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px;margin:0 0 12px}
+.row .lab{font-weight:500;font-size:.95rem}
+.row output{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+.row input[type=range]{grid-column:1 / -1;width:100%;height:28px;accent-color:var(--violet);margin:0}
+.row .hint{grid-column:1 / -1;font-size:.82rem;color:var(--muted);margin-top:-4px}
+.toggle{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-weight:500;font-size:.95rem;cursor:pointer;min-height:32px}
+.toggle input{width:22px;height:22px;accent-color:var(--violet);margin:0}
+.size{display:flex;align-items:center;gap:8px;margin:0 0 12px;flex-wrap:wrap}
+.size input{width:88px;font:inherit;font-size:1.05rem;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.size span{color:var(--muted)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.btnrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.btn{appearance:none;font:inherit;font-weight:600;padding:11px 8px;border-radius:10px;border:2px solid var(--violet);
+  background:transparent;color:var(--violet);cursor:pointer}
+.btn.primary{background:var(--violet);color:var(--violet-ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.note{font-size:.84rem;color:var(--muted);margin:10px 0 0}
+.hidden{display:none !important}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 14px;margin:0 0 14px;width:100%}
+.tbtn{appearance:none;font:inherit;font-weight:600;font-size:.95rem;padding:8px 14px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);cursor:pointer;min-height:40px}
+.tbtn:disabled{opacity:.4;cursor:not-allowed}
+.tbtn.primary{background:var(--violet);border-color:var(--violet);color:var(--violet-ink)}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{appearance:none;border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;font-size:.95rem;padding:7px 14px;border-radius:7px;cursor:pointer;min-height:34px}
+.seg button[aria-checked="true"]{background:var(--violet);color:var(--violet-ink)}
+.brush{display:inline-flex;align-items:center;gap:8px;font-weight:500;font-size:.92rem}
+.brush input{width:130px;accent-color:var(--violet)}
+.brush output{font-variant-numeric:tabular-nums;color:var(--muted);min-width:52px}
+#view{background:#fff;box-shadow:0 1px 0 var(--line),0 10px 30px rgba(20,15,40,.18);border-radius:2px;display:block;touch-action:auto}
+#view.drawing{cursor:crosshair}
+.empty{text-align:center;color:var(--muted);max-width:340px;margin:auto}
+.empty svg{width:120px;height:120px;margin-bottom:10px;color:var(--violet)}
+.empty p{margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;margin-top:14px;font-size:.86rem;color:var(--muted);max-width:640px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:30px;height:14px;color:var(--ink)}
+.busy{position:absolute;top:16px;right:16px;background:var(--panel);color:var(--ink);border:1px solid var(--line);
+  padding:6px 12px;border-radius:20px;font-size:.88rem;font-weight:500;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-weight:500;z-index:30;max-width:90vw}
+.modal{position:fixed;inset:0;background:rgba(10,8,20,.6);display:flex;align-items:center;justify-content:center;z-index:20;padding:20px}
+.modal .card{background:var(--panel);color:var(--ink);border-radius:14px;padding:18px;max-width:min(560px,100%);max-height:90vh;overflow:auto}
+.modal img{max-width:100%;display:block;margin:10px 0;background:#fff;border:1px solid var(--line)}
+@media (max-width: 900px){
+  .app{grid-template-columns:1fr;height:auto;min-height:100%}
+  .panel{border-right:0;overflow:visible}
+  .stage{order:-1;min-height:50vh}
+}
+@media (prefers-reduced-motion: no-preference){ .mode,.seg button{transition:background-color .15s, border-color .15s} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <h1>Stencil Maker</h1>
+    <p class="sub">Turn a reference into a transfer-ready stencil. Photos stay on this device.</p>
+
+    <label class="upload">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-8 7"/></svg>
+      <span id="uploadLabel">Choose photo</span>
+      <input type="file" id="file" accept="image/*">
+    </label>
+    <div id="suggest" class="suggest hidden" role="status"></div>
+
+    <section id="photoSec" class="hidden">
+      <h2>Photo</h2>
+      <div class="btnrow">
+        <button class="btn" id="rotL">Rotate left</button>
+        <button class="btn" id="rotR">Rotate right</button>
+        <button class="btn" id="cropBtn">Crop</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Style</h2>
+      <div class="modes" role="radiogroup" aria-label="Stencil style">
+        <button class="mode" role="radio" data-mode="line" aria-checked="true">
+          <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M20 5l4.5 9.5 10.5 1.5-7.6 7.3 1.8 10.4L20 28.8l-9.2 4.9 1.8-10.4L5 16l10.5-1.5z"/></svg>
+          <b>Simple</b>
+        </button>
+        <button class="mode" role="radio" data-mode="realism" aria-checked="false">
+          <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 30c3-12 10-20 18-20 6 0 10 5 10 11"/><path d="M11 30c2-8 7-14 13-14 4 0 6 3 6 6" stroke-dasharray="3 3"/><path d="M16 30c1-5 4-8 8-8 2 0 3 1 3 3" stroke-dasharray="2 3"/></svg>
+          <b>Realism</b>
+        </button>
+        <button class="mode" role="radio" data-mode="portrait" aria-checked="false">
+          <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 16c2-2 5-2 7 0"/><path d="M22 16c2-2 5-2 7 0"/><circle cx="15.5" cy="17.5" r="1.2" fill="currentColor"/><circle cx="25.5" cy="17.5" r="1.2" fill="currentColor"/><path d="M19 24c1 1 2 1 3 0"/><path d="M15 29c3 2 8 2 11 0"/><path d="M9 12c0 10 4 20 11 22" stroke-dasharray="2.5 3"/></svg>
+          <b>Portrait</b>
+        </button>
+      </div>
+      <p class="modedesc" id="modeDesc"></p>
+      <button class="linkbtn" id="resetStyle">Reset this style to defaults</button>
+    </section>
+
+    <section>
+      <h2>Prep the photo</h2>
+      <div id="g-prep"></div>
+    </section>
+
+    <section>
+      <h2>Lines</h2>
+      <div id="g-lines"></div>
+    </section>
+
+    <section>
+      <h2>Cleanup</h2>
+      <p class="note" style="margin:0 0 10px">Pick Erase or Draw above the stencil. With Apple Pencil, fingers stop drawing and pinch to zoom instead. Marks stay put when you change sliders.</p>
+      <button class="btn" id="clearMarks" style="width:100%">Clear all cleanup marks</button>
+    </section>
+
+    <section>
+      <h2>Output</h2>
+      <div class="size">
+        <label for="widthIn" style="font-weight:500">Width</label>
+        <input type="number" id="widthIn" min="0.5" max="16" step="0.25" inputmode="decimal" value="4">
+        <span id="sizeText">in wide</span>
+      </div>
+      <div id="g-out"></div>
+      <div class="btns">
+        <button class="btn primary" id="savePng" disabled>Save image</button>
+        <button class="btn" id="savePdf" disabled>Save print PDF</button>
+      </div>
+      <p class="note">The image is for a thermal printer app. The PDF prints at true size for hand tracing: print at 100% or Actual Size, not Fit to Page. Measure the 1-inch bar on any print to confirm the size.</p>
+    </section>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="toolbar hidden" id="toolbar">
+      <button class="tbtn" id="undo" disabled>Undo</button>
+      <button class="tbtn" id="redo" disabled>Redo</button>
+      <div class="seg" role="radiogroup" aria-label="Tool">
+        <button role="radio" data-tool="view" aria-checked="true">Adjust</button>
+        <button role="radio" data-tool="erase" aria-checked="false">Erase</button>
+        <button role="radio" data-tool="draw" aria-checked="false">Draw</button>
+      </div>
+      <label class="brush hidden" id="brushWrap">Brush <input type="range" id="brush" min="0.3" max="6" step="0.1" value="1.2"><output id="brushOut">1.2 mm</output></label>
+    </div>
+    <div class="toolbar hidden" id="cropbar">
+      <button class="tbtn" id="cropCancel">Cancel</button>
+      <button class="tbtn" id="cropReset">Reset crop</button>
+      <button class="tbtn primary" id="cropApply">Apply crop</button>
+    </div>
+    <div class="empty" id="empty">
+      <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="20" y="14" width="80" height="92" rx="4"/><path d="M38 72c6-18 16-28 26-28 9 0 14 7 14 16"/><path d="M46 72c4-10 10-16 18-16 5 0 7 3 7 7" stroke-dasharray="4 4"/><circle cx="62" cy="36" r="3"/></svg>
+      <p>Choose a photo to start. You’ll get a suggested style, and you can switch anytime.</p>
+    </div>
+    <canvas id="view" class="hidden" aria-label="Stencil preview"></canvas>
+    <div class="legend hidden" id="legend">
+      <span><svg viewBox="0 0 30 14"><path d="M2 7h26" stroke="currentColor" stroke-width="2"/></svg>Hard edge</span>
+      <span><svg viewBox="0 0 30 14"><path d="M2 7h26" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4"/></svg>Soft transition</span>
+      <span><svg viewBox="0 0 30 14"><circle cx="15" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>Highlight, leave open</span>
+      <span><svg viewBox="0 0 30 14"><path d="M4 13l8-12M12 13l8-12M20 13l8-12" stroke="currentColor" stroke-width="1.6"/></svg>Solid black</span>
+    </div>
+    <div class="busy hidden" id="busy" role="status">Working…</div>
+  </main>
+</div>
+
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="card">
+    <h2 id="modalTitle">Save your stencil</h2>
+    <p class="note" id="modalNote" style="margin-top:0">Press and hold the image, then choose Save to Photos or Share.</p>
+    <img id="modalImg" alt="Finished stencil">
+    <button class="btn primary" id="modalClose" style="width:100%">Done</button>
+  </div>
+</div>
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const view = $("#view");
+const LS_KEY = "stencilMaker.v2";
+const NAMES = {line:"Simple", realism:"Realism", portrait:"Portrait"};
+const PRESETS = {
+  line:     { smooth:1,   detail:8,  weight:0.45, speck:25, threshAuto:true, thresh:128, fill:6, levels:4, hardness:45, dashed:true, highlights:true, hatch:false },
+  realism:  { smooth:3,   detail:18, weight:0.30, speck:30, threshAuto:true, thresh:128, fill:6, levels:4, hardness:45, dashed:true, highlights:true, hatch:false },
+  portrait: { smooth:4.5, detail:8,  weight:0.25, speck:45, threshAuto:true, thresh:128, fill:6, levels:3, hardness:60, dashed:true, highlights:true, hatch:false }
+};
+const MODE_KEYS = Object.keys(PRESETS.line);
+const DESC = {
+  line: "Clean, closed outlines. Best for flash, script, traditional and graphic designs.",
+  realism: "Shade zones mapped like a topographic map. Best for black and grey work, animals and objects.",
+  portrait: "Light landmarks only, with soft transitions dashed so they disappear under shading. Best for faces."
+};
+const CONTROLS = [
+  {id:"brightness", g:"prep", t:"range", label:"Brightness", min:-60, max:60, step:1},
+  {id:"contrast", g:"prep", t:"range", label:"Contrast", min:-60, max:60, step:1},
+  {id:"smooth", g:"prep", t:"range", label:"Smoothing", min:0, max:8, step:0.5, hint:"Higher removes skin texture and noise. Scales with print size."},
+  {id:"bgRemove", g:"prep", t:"check", label:"Remove plain background"},
+  {id:"bgTol", g:"prep", t:"range", label:"Background tolerance", min:5, max:80, step:1, show:()=>P.bgRemove},
+
+  {id:"threshAuto", g:"lines", t:"check", label:"Auto darkness cutoff", modes:["line"]},
+  {id:"thresh", g:"lines", t:"range", label:"Darkness cutoff", min:20, max:235, step:1, modes:["line"], show:()=>!P.threshAuto},
+  {id:"fill", g:"lines", t:"range", label:"Outline fills wider than", min:0, max:20, step:1, modes:["line"], fmt:v=>v==0?"Off":(v*0.2).toFixed(1)+" mm", hint:"Turns solid areas into outlines. Off keeps fills solid."},
+  {id:"levels", g:"lines", t:"range", label:"Shade zones", min:3, max:6, step:1, modes:["realism","portrait"]},
+  {id:"hardness", g:"lines", t:"range", label:"Soft edge share", min:0, max:95, step:1, modes:["realism","portrait"], fmt:v=>v+"%", hint:"Share of zone lines drawn dashed as soft transitions."},
+  {id:"detail", g:"lines", t:"range", label:"Fine detail lines", min:0, max:100, step:1},
+  {id:"weight", g:"lines", t:"range", label:"Line weight", min:0.15, max:1.2, step:0.05, fmt:v=>(+v).toFixed(2)+" mm"},
+  {id:"speck", g:"lines", t:"range", label:"Clean up specks", min:0, max:200, step:1},
+  {id:"dashed", g:"lines", t:"check", label:"Dash soft transitions", modes:["realism","portrait"]},
+  {id:"highlights", g:"lines", t:"check", label:"Mark highlights", modes:["realism","portrait"]},
+  {id:"hatch", g:"lines", t:"check", label:"Mark solid blacks", modes:["realism","portrait"]},
+
+  {id:"checkBar", g:"out", t:"check", label:"Add 1-inch check bar to image", hint:"Prints below the stencil so you can confirm the size with a ruler."},
+  {id:"mirror", g:"out", t:"check", label:"Mirror image", hint:"Thermal and hand-traced stencils usually come out right without this."},
+  {id:"overlay", g:"out", t:"range", label:"Show photo underneath", min:0, max:80, step:5, fmt:v=>v+"%", hint:"Preview only. Never printed."}
+];
+const RENDER_ONLY = {mirror:1, overlay:1, checkBar:1};
+
+const S = { img:null, rot:null, src:null, rotation:0, crop:{x:0,y:0,w:1,h:1},
+  mode:"line", suggested:null, res:null, base:null, strokes:[], drawing:null,
+  hist:[], future:[], cur:null, tool:"view", brushMM:1.2, penSeen:false,
+  cropping:false, cropDraft:null, drag:null, timer:null, running:false, again:null };
+const P = { brightness:0, contrast:0, bgRemove:false, bgTol:25, widthIn:4, mirror:false, overlay:0, checkBar:true };
+let MP = { line:{...PRESETS.line}, realism:{...PRESETS.realism}, portrait:{...PRESETS.portrait} };
+
+/* ---------- Storage ---------- */
+function loadStore(){
+  try{
+    const raw=localStorage.getItem(LS_KEY); if(!raw) return;
+    const o=JSON.parse(raw);
+    if(o.MP) for(const m of Object.keys(NAMES)) if(o.MP[m]) MP[m]=Object.assign({},PRESETS[m],o.MP[m]);
+    if(o.common) for(const k of ["bgTol","widthIn","mirror","checkBar"]) if(k in o.common) P[k]=o.common[k];
+    if(o.brushMM) S.brushMM=o.brushMM;
+  }catch(e){}
+}
+function saveStore(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({MP, brushMM:S.brushMM, common:{bgTol:P.bgTol,widthIn:P.widthIn,mirror:P.mirror,checkBar:P.checkBar}})); }catch(e){}
+}
+
+/* ---------- History ---------- */
+function snap(){ return { mode:S.mode, MP:JSON.parse(JSON.stringify(MP)), P:{...P}, strokes:S.strokes.slice(), rotation:S.rotation, crop:{...S.crop} }; }
+function commit(){
+  if(!S.cur){ S.cur=snap(); return; }
+  S.hist.push(S.cur); if(S.hist.length>80) S.hist.shift();
+  S.cur=snap(); S.future=[]; updateUndo(); saveStore();
+}
+function sameParams(a,b){ return a.mode===b.mode && JSON.stringify(a.P)===JSON.stringify(b.P) && JSON.stringify(a.MP)===JSON.stringify(b.MP); }
+function restore(st){
+  const prev=S.cur;
+  S.mode=st.mode; MP=JSON.parse(JSON.stringify(st.MP)); Object.assign(P,st.P); S.strokes=st.strokes.slice();
+  const geo = st.rotation!==S.rotation || JSON.stringify(st.crop)!==JSON.stringify(S.crop);
+  S.rotation=st.rotation; S.crop={...st.crop};
+  if(geo){ buildRot(); buildSrc(); }
+  S.cur=st; $("#widthIn").value=P.widthIn; syncControls(); updateUndo(); saveStore();
+  if(geo || !prev || !sameParams(prev,st)) schedule(false); else renderPreview();
+}
+function undo(){ if(!S.hist.length||S.cropping) return; S.future.push(S.cur); restore(S.hist.pop()); }
+function redo(){ if(!S.future.length||S.cropping) return; S.hist.push(S.cur); restore(S.future.pop()); }
+function updateUndo(){ $("#undo").disabled=!S.hist.length; $("#redo").disabled=!S.future.length; }
+
+/* ---------- UI ---------- */
+function setParam(id,v){ P[id]=v; if(MODE_KEYS.includes(id)) MP[S.mode][id]=v; }
+function buildControls(){
+  for(const c of CONTROLS){
+    const host=$("#g-"+c.g); let el;
+    if(c.t==="range"){
+      el=document.createElement("label"); el.className="row";
+      el.innerHTML=`<span class="lab">${c.label}</span><output></output><input type="range" min="${c.min}" max="${c.max}" step="${c.step}">`+(c.hint?`<span class="hint">${c.hint}</span>`:"");
+      const inp=el.querySelector("input"), out=el.querySelector("output");
+      inp.addEventListener("input",()=>{ setParam(c.id,parseFloat(inp.value)); out.textContent=c.fmt?c.fmt(P[c.id]):P[c.id]; if(RENDER_ONLY[c.id]) renderPreview(); else schedule(true); });
+      inp.addEventListener("change",()=>{ if(!RENDER_ONLY[c.id]) schedule(false); commit(); });
+      c.inp=inp; c.out=out;
+    } else {
+      el=document.createElement("div");
+      el.innerHTML=`<label class="toggle"><input type="checkbox"><span>${c.label}</span></label>`+(c.hint?`<p class="note" style="margin:-8px 0 12px">${c.hint}</p>`:"");
+      const inp=el.querySelector("input");
+      inp.addEventListener("change",()=>{ setParam(c.id,inp.checked); syncControls(); if(RENDER_ONLY[c.id]) renderPreview(); else schedule(false); commit(); });
+      c.inp=inp;
+    }
+    c.el=el; host.appendChild(el);
+  }
+}
+function syncControls(){
+  for(const c of CONTROLS){
+    const vis=(!c.modes||c.modes.includes(S.mode))&&(!c.show||c.show());
+    c.el.classList.toggle("hidden",!vis);
+    if(c.t==="range"){ c.inp.value=P[c.id]; c.out.textContent=c.fmt?c.fmt(P[c.id]):P[c.id]; }
+    else c.inp.checked=!!P[c.id];
+  }
+  document.querySelectorAll(".mode").forEach(b=>{
+    const m=b.dataset.mode; b.setAttribute("aria-checked",m===S.mode?"true":"false");
+    let tag=b.querySelector(".tag");
+    if(m===S.suggested){ if(!tag){ tag=document.createElement("span"); tag.className="tag"; tag.textContent="Suggested"; b.appendChild(tag);} }
+    else if(tag) tag.remove();
+  });
+  $("#modeDesc").textContent=DESC[S.mode];
+  $("#legend").classList.toggle("hidden",!S.src||S.mode==="line"||S.cropping);
+  document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-checked",b.dataset.tool===S.tool?"true":"false"));
+  $("#brushWrap").classList.toggle("hidden",S.tool==="view");
+  $("#brush").value=S.brushMM; $("#brushOut").textContent=S.brushMM.toFixed(1)+" mm";
+  view.classList.toggle("drawing",S.tool!=="view"&&!S.cropping);
+  updateTouchAction(); updateSizeText();
+}
+function setMode(m,user){ S.mode=m; Object.assign(P,MP[m]); syncControls(); schedule(false); if(user) commit(); }
+function dims(){
+  if(!S.src) return {wIn:P.widthIn,hIn:P.widthIn};
+  return {wIn:P.widthIn, hIn:P.widthIn*S.src.height/S.src.width};
+}
+function updateSizeText(){ const d=dims(); $("#sizeText").textContent=S.src?`in wide, ${d.hIn.toFixed(2)} in tall`:"in wide"; }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.remove("hidden"); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.add("hidden"),2600); }
+function setBusy(b){ $("#busy").classList.toggle("hidden",!b); }
+function updateTouchAction(){
+  view.style.touchAction = (S.cropping || S.tool!=="view") ? (S.penSeen&&!S.cropping?"pinch-zoom":"none") : "auto";
+}
+function fitCanvas(cw,ch){
+  const st=$("#stage"), narrow=window.matchMedia("(max-width: 900px)").matches;
+  const availW=Math.max(120,st.clientWidth-40);
+  const bars=$("#toolbar").offsetHeight+$("#cropbar").offsetHeight+($("#legend").classList.contains("hidden")?0:$("#legend").offsetHeight+14);
+  const availH=narrow?window.innerHeight*0.6:Math.max(220,st.clientHeight-bars-60);
+  const k=Math.min(availW/cw,availH/ch);
+  view.style.width=Math.floor(cw*k)+"px"; view.style.height=Math.floor(ch*k)+"px";
+}
+window.addEventListener("resize",()=>{ if(S.cropping) renderCrop(); else if(S.res) fitCanvas(S.res.w,S.res.h); });
+
+/* ---------- Photo, rotate, crop ---------- */
+$("#file").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f), im=new Image();
+  im.onload=()=>{
+    S.img=im; S.rotation=0; S.crop={x:0,y:0,w:1,h:1}; S.strokes=[]; S.hist=[]; S.future=[]; S.cur=null;
+    P.brightness=0; P.contrast=0; P.bgRemove=false; P.overlay=0;
+    buildRot(); buildSrc();
+    $("#empty").classList.add("hidden"); view.classList.remove("hidden"); $("#toolbar").classList.remove("hidden"); $("#photoSec").classList.remove("hidden");
+    $("#uploadLabel").textContent="Choose a different photo";
+    $("#savePng").disabled=false; $("#savePdf").disabled=false;
+    const sug=analyze(); S.suggested=sug.mode;
+    const s=$("#suggest"); s.textContent=`This image has ${sug.why}, so ${NAMES[sug.mode]} is selected. Switch styles anytime.`; s.classList.remove("hidden");
+    setMode(sug.mode,false); S.cur=snap(); updateUndo();
+  };
+  im.onerror=()=>toast("That file couldn’t be opened. Try a JPG or PNG.");
+  im.src=url; e.target.value="";
+});
+function buildRot(){
+  const im=S.img, nw=im.naturalWidth, nh=im.naturalHeight, k=Math.min(1,3200/Math.max(nw,nh));
+  const w=Math.round(nw*k), h=Math.round(nh*k), r=S.rotation, swap=(r===90||r===270);
+  const c=document.createElement("canvas"); c.width=swap?h:w; c.height=swap?w:h;
+  const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,c.width,c.height);
+  x.translate(c.width/2,c.height/2); x.rotate(r*Math.PI/180); x.drawImage(im,-w/2,-h/2,w,h);
+  S.rot=c;
+}
+function buildSrc(){
+  const R=S.rot, c=S.crop;
+  const sx=Math.round(c.x*R.width), sy=Math.round(c.y*R.height);
+  const sw=Math.max(8,Math.round(c.w*R.width)), sh=Math.max(8,Math.round(c.h*R.height));
+  const o=document.createElement("canvas"); o.width=sw; o.height=sh;
+  o.getContext("2d").drawImage(R,sx,sy,sw,sh,0,0,sw,sh);
+  S.src=o; updateSizeText();
+}
+function mapStrokes(fn){ S.strokes=S.strokes.map(st=>{ const p=st.pts.slice(); for(let i=0;i<p.length;i+=2){ const q=fn(p[i],p[i+1]); p[i]=q[0]; p[i+1]=q[1]; } return {...st,pts:p}; }); }
+function rotate(dir){
+  if(!S.img||S.cropping) return;
+  const c=S.crop;
+  mapStrokes((u,v)=>{ const ur=c.x+u*c.w, vr=c.y+v*c.h; return dir>0?[1-vr,ur]:[vr,1-ur]; });
+  S.rotation=(S.rotation+(dir>0?90:270))%360; S.crop={x:0,y:0,w:1,h:1};
+  buildRot(); buildSrc(); schedule(false); commit();
+}
+$("#rotL").addEventListener("click",()=>rotate(-1));
+$("#rotR").addEventListener("click",()=>rotate(1));
+$("#cropBtn").addEventListener("click",()=>{
+  if(!S.img) return; S.cropping=true; S.cropDraft={...S.crop};
+  $("#toolbar").classList.add("hidden"); $("#cropbar").classList.remove("hidden");
+  syncControls(); renderCrop();
+});
+function exitCrop(){ S.cropping=false; S.drag=null; $("#cropbar").classList.add("hidden"); $("#toolbar").classList.remove("hidden"); syncControls(); }
+$("#cropCancel").addEventListener("click",()=>{ exitCrop(); renderPreview(); });
+$("#cropReset").addEventListener("click",()=>{ S.cropDraft={x:0,y:0,w:1,h:1}; renderCrop(); });
+$("#cropApply").addEventListener("click",()=>{
+  const o=S.crop, n=S.cropDraft;
+  mapStrokes((u,v)=>{ const ur=o.x+u*o.w, vr=o.y+v*o.h; return [(ur-n.x)/n.w,(vr-n.y)/n.h]; });
+  S.crop={...n}; exitCrop(); buildSrc(); schedule(false); commit();
+});
+function renderCrop(){
+  const R=S.rot, k=Math.min(1,1400/Math.max(R.width,R.height)), w=Math.round(R.width*k), h=Math.round(R.height*k);
+  view.width=w; view.height=h; fitCanvas(w,h);
+  const x=view.getContext("2d"); x.setTransform(1,0,0,1,0,0); x.drawImage(R,0,0,w,h);
+  const d=S.cropDraft, cx=d.x*w, cy=d.y*h, cw=d.w*w, ch=d.h*h;
+  x.fillStyle="rgba(10,8,20,.6)"; x.beginPath(); x.rect(0,0,w,h); x.rect(cx,cy,cw,ch); x.fill("evenodd");
+  const px=w/view.getBoundingClientRect().width;
+  x.strokeStyle="#fff"; x.lineWidth=2*px; x.strokeRect(cx,cy,cw,ch);
+  x.lineWidth=1*px; x.strokeStyle="rgba(255,255,255,.5)";
+  for(let i=1;i<3;i++){ x.beginPath(); x.moveTo(cx+cw*i/3,cy); x.lineTo(cx+cw*i/3,cy+ch); x.moveTo(cx,cy+ch*i/3); x.lineTo(cx+cw,cy+ch*i/3); x.stroke(); }
+  const hs=16*px; x.fillStyle="#fff";
+  for(const [hx,hy] of [[cx,cy],[cx+cw,cy],[cx,cy+ch],[cx+cw,cy+ch]]) x.fillRect(hx-hs/2,hy-hs/2,hs,hs);
+}
+function normPt(e){ const r=view.getBoundingClientRect(); return {x:Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)), y:Math.min(1,Math.max(0,(e.clientY-r.top)/r.height)), r}; }
+function cropDown(e){
+  e.preventDefault(); view.setPointerCapture(e.pointerId);
+  const p=normPt(e), d=S.cropDraft, tolX=30/p.r.width, tolY=30/p.r.height;
+  const corners={nw:[d.x,d.y],ne:[d.x+d.w,d.y],sw:[d.x,d.y+d.h],se:[d.x+d.w,d.y+d.h]};
+  let kind=null;
+  for(const k in corners){ const c=corners[k]; if(Math.abs(p.x-c[0])<tolX&&Math.abs(p.y-c[1])<tolY){kind=k;break;} }
+  if(!kind) kind=(p.x>d.x&&p.x<d.x+d.w&&p.y>d.y&&p.y<d.y+d.h)?"move":"new";
+  const opp={nw:"se",ne:"sw",sw:"ne",se:"nw"};
+  S.drag={kind, start:p, orig:{...d}, fixed: kind in opp ? corners[opp[kind]] : [p.x,p.y], id:e.pointerId};
+}
+function cropMove(e){
+  const g=S.drag; if(!g||e.pointerId!==g.id) return;
+  const p=normPt(e), o=g.orig, MIN=0.04;
+  if(g.kind==="move"){
+    S.cropDraft={x:Math.min(1-o.w,Math.max(0,o.x+p.x-g.start.x)), y:Math.min(1-o.h,Math.max(0,o.y+p.y-g.start.y)), w:o.w, h:o.h};
+  } else {
+    const F=g.fixed; let x0=Math.min(F[0],p.x), x1=Math.max(F[0],p.x), y0=Math.min(F[1],p.y), y1=Math.max(F[1],p.y);
+    if(x1-x0<MIN){ if(p.x<F[0]) x0=Math.max(0,x1-MIN); else x1=Math.min(1,x0+MIN); }
+    if(y1-y0<MIN){ if(p.y<F[1]) y0=Math.max(0,y1-MIN); else y1=Math.min(1,y0+MIN); }
+    S.cropDraft={x:x0,y:y0,w:x1-x0,h:y1-y0};
+  }
+  renderCrop();
+}
+
+/* ---------- Drawing (cleanup) ---------- */
+document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>{ S.tool=b.dataset.tool; syncControls(); }));
+$("#brush").addEventListener("input",e=>{ S.brushMM=parseFloat(e.target.value); $("#brushOut").textContent=S.brushMM.toFixed(1)+" mm"; });
+$("#brush").addEventListener("change",saveStore);
+$("#clearMarks").addEventListener("click",()=>{ if(!S.strokes.length){ toast("No cleanup marks yet"); return; } S.strokes=[]; renderPreview(); commit(); toast("Cleanup marks cleared. Undo brings them back."); });
+function toUV(e){ const r=view.getBoundingClientRect(); let u=(e.clientX-r.left)/r.width; const v=(e.clientY-r.top)/r.height; if(P.mirror) u=1-u; return [u,v]; }
+view.addEventListener("pointerdown",e=>{
+  if(S.cropping){ cropDown(e); return; }
+  if(S.tool==="view"||!S.res) return;
+  if(e.pointerType==="pen" && !S.penSeen){ S.penSeen=true; updateTouchAction(); }
+  if(e.pointerType==="touch" && S.penSeen) return;
+  e.preventDefault(); view.setPointerCapture(e.pointerId);
+  const p=toUV(e); S.drawing={tool:S.tool, mm:S.brushMM, pts:[p[0],p[1]], id:e.pointerId};
+  liveSeg(p,p);
+});
+view.addEventListener("pointermove",e=>{
+  if(S.cropping){ cropMove(e); return; }
+  const d=S.drawing; if(!d||e.pointerId!==d.id) return;
+  const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];
+  for(const ev of (evs.length?evs:[e])){
+    const p=toUV(ev), n=d.pts.length; const prev=[d.pts[n-2],d.pts[n-1]];
+    d.pts.push(p[0],p[1]); liveSeg(prev,p);
+  }
+});
+function endPointer(e){
+  if(S.cropping){ if(S.drag&&e.pointerId===S.drag.id) S.drag=null; return; }
+  const d=S.drawing; if(!d||e.pointerId!==d.id) return;
+  S.strokes.push({tool:d.tool, mm:d.mm, pts:d.pts}); S.drawing=null; renderPreview(); commit();
+}
+view.addEventListener("pointerup",endPointer);
+view.addEventListener("pointercancel",endPointer);
+function liveSeg(a,b){
+  const res=S.res, x=view.getContext("2d"); x.save(); x.setTransform(1,0,0,1,0,0);
+  if(P.mirror){ x.translate(res.w,0); x.scale(-1,1); }
+  x.strokeStyle = S.drawing.tool==="erase" ? "#fff" : (P.overlay>0?"rgb(74,46,200)":"#000");
+  x.lineWidth=Math.max(1,S.drawing.mm*res.ppmm); x.lineCap="round"; x.lineJoin="round";
+  x.beginPath(); x.moveTo(a[0]*res.w,a[1]*res.h); x.lineTo(b[0]*res.w+0.01,b[1]*res.h); x.stroke(); x.restore();
+}
+function drawEdits(x,res){
+  x.lineCap="round"; x.lineJoin="round"; x.strokeStyle="#000";
+  for(const st of S.strokes){
+    x.globalCompositeOperation = st.tool==="erase"?"destination-out":"source-over";
+    x.lineWidth=Math.max(1,st.mm*res.ppmm);
+    const p=st.pts; x.beginPath(); x.moveTo(p[0]*res.w,p[1]*res.h);
+    if(p.length<=2) x.lineTo(p[0]*res.w+0.01,p[1]*res.h);
+    for(let i=2;i<p.length;i+=2) x.lineTo(p[i]*res.w,p[i+1]*res.h);
+    x.stroke();
+  }
+  x.globalCompositeOperation="source-over";
+}
+document.addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="z"){ e.preventDefault(); if(e.shiftKey) redo(); else undo(); }
+});
+$("#undo").addEventListener("click",undo);
+$("#redo").addEventListener("click",redo);
+
+/* ---------- Style controls ---------- */
+document.querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.mode!==S.mode) setMode(b.dataset.mode,true); }));
+$("#resetStyle").addEventListener("click",()=>{ MP[S.mode]={...PRESETS[S.mode]}; Object.assign(P,MP[S.mode]); syncControls(); schedule(false); commit(); toast(`${NAMES[S.mode]} reset to defaults`); });
+$("#widthIn").addEventListener("input",e=>{ const v=parseFloat(e.target.value); if(v>=0.5&&v<=16){ P.widthIn=v; updateSizeText(); schedule(false); } });
+$("#widthIn").addEventListener("change",commit);
+
+function analyze(){
+  const im=S.src, sc=220/Math.max(im.width,im.height);
+  const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc));
+  const c=document.createElement("canvas"); c.width=w; c.height=h;
+  const x=c.getContext("2d"); x.drawImage(im,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data; let ext=0, skin=0; const n=w*h;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i],g=d[i+1],b=d[i+2], l=.299*r+.587*g+.114*b;
+    if(l<70||l>190) ext++;
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+    if(r>95&&g>40&&b>20&&r>g&&r>b&&(mx-mn)>15&&Math.abs(r-g)>15) skin++;
+  }
+  if(ext/n>0.85) return {mode:"line", why:"mostly solid darks and lights, like flash or line art"};
+  if(skin/n>0.2) return {mode:"portrait", why:"a lot of skin tone"};
+  return {mode:"realism", why:"a wide range of tones"};
+}
+
+/* ---------- Scheduling ---------- */
+function previewLong(){ const d=dims(); return Math.min(1400,Math.max(500,Math.round(Math.max(d.wIn,d.hIn)*300))); }
+function schedule(draft){
+  if(!S.src||S.cropping) return;
+  clearTimeout(S.timer); setBusy(true);
+  S.timer=setTimeout(()=>run(!!draft), draft?40:120);
+}
+function run(draft){
+  if(S.running){ S.again = (S.again===null) ? draft : (S.again && draft); return; }
+  S.running=true;
+  setTimeout(()=>{
+    try{ S.res=processImg(draft?Math.min(650,previewLong()):previewLong()); S.base=buildBase(S.res); renderPreview(); }
+    catch(err){ console.error(err); toast("Processing failed on this image. Try cropping it smaller."); }
+    S.running=false; setBusy(false);
+    if(S.again!==null){ const a=S.again; S.again=null; schedule(a); }
+  },16);
+}
+
+/* ---------- Image processing ---------- */
+function prep(longSide){
+  const im=S.src, sc=longSide/Math.max(im.width,im.height);
+  const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc));
+  const c=document.createElement("canvas"); c.width=w; c.height=h;
+  const x=c.getContext("2d",{willReadFrequently:true});
+  x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.imageSmoothingQuality="high"; x.drawImage(im,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data, L=new Float32Array(w*h);
+  const C=P.contrast*2, cf=(259*(C+255))/(255*(259-C)), br=P.brightness*1.5;
+  for(let i=0,j=0;i<L.length;i++,j+=4){ let v=.299*d[j]+.587*d[j+1]+.114*d[j+2]; v=cf*(v-128)+128+br; L[i]=v<0?0:v>255?255:v; }
+  return {w,h,L};
+}
+function boxes(sigma,n){
+  const wIdeal=Math.sqrt(12*sigma*sigma/n+1); let wl=Math.floor(wIdeal); if(wl%2===0) wl--;
+  const wu=wl+2, m=Math.round((12*sigma*sigma-n*wl*wl-4*n*wl-3*n)/(-4*wl-4));
+  const s=[]; for(let i=0;i<n;i++) s.push(i<m?wl:wu); return s;
+}
+function boxH(s,d,w,h,r){ const n=2*r+1;
+  for(let y=0;y<h;y++){ const o=y*w; let acc=0;
+    for(let k=-r;k<=r;k++) acc+=s[o+Math.min(w-1,Math.max(0,k))];
+    for(let x=0;x<w;x++){ d[o+x]=acc/n; acc+=s[o+Math.min(w-1,x+r+1)]-s[o+Math.max(0,x-r)]; } } }
+function boxV(s,d,w,h,r){ const n=2*r+1;
+  for(let x=0;x<w;x++){ let acc=0;
+    for(let k=-r;k<=r;k++) acc+=s[Math.min(h-1,Math.max(0,k))*w+x];
+    for(let y=0;y<h;y++){ d[y*w+x]=acc/n; acc+=s[Math.min(h-1,y+r+1)*w+x]-s[Math.max(0,y-r)*w+x]; } } }
+function blur(src,w,h,sigma){
+  const a=Float32Array.from(src); if(sigma<0.5) return a;
+  const b=new Float32Array(src.length);
+  for(const sz of boxes(sigma,3)){ const r=(sz-1)>>1; if(r<1) continue; boxH(a,b,w,h,r); boxV(b,a,w,h,r); }
+  return a;
+}
+function sobel(L,w,h){
+  const mag=new Float32Array(w*h), dir=new Uint8Array(w*h);
+  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
+    const i=y*w+x;
+    const a=L[i-w-1],b=L[i-w],c=L[i-w+1],d=L[i-1],f=L[i+1],g=L[i+w-1],hh=L[i+w],k=L[i+w+1];
+    const gx=(c+2*f+k)-(a+2*d+g), gy=(g+2*hh+k)-(a+2*b+c);
+    mag[i]=Math.sqrt(gx*gx+gy*gy);
+    let an=Math.atan2(gy,gx)*57.29578; if(an<0) an+=180;
+    dir[i]=(an<22.5||an>=157.5)?0:an<67.5?1:an<112.5?2:3;
+  }
+  return {mag,dir};
+}
+function pct(arr,q,skip){
+  let max=0; for(let i=0;i<arr.length;i++) if((!skip||!skip[i])&&arr[i]>max) max=arr[i];
+  if(max<=0) return 0;
+  const B=2048, hist=new Uint32Array(B); let n=0;
+  for(let i=0;i<arr.length;i++){ if(skip&&skip[i]) continue; hist[Math.min(B-1,(arr[i]/max*(B-1))|0)]++; n++; }
+  const target=q*n; let acc=0;
+  for(let b=0;b<B;b++){ acc+=hist[b]; if(acc>=target) return b/(B-1)*max; }
+  return max;
+}
+function canny(sb,w,h,hi,lo,skip){
+  const {mag,dir}=sb, nms=new Float32Array(w*h);
+  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
+    const i=y*w+x, m=mag[i]; if(m<lo) continue; let p,q;
+    switch(dir[i]){ case 0:p=mag[i-1];q=mag[i+1];break; case 1:p=mag[i-w-1];q=mag[i+w+1];break;
+      case 2:p=mag[i-w];q=mag[i+w];break; default:p=mag[i-w+1];q=mag[i+w-1]; }
+    if(m>=p&&m>=q) nms[i]=m;
+  }
+  const out=new Uint8Array(w*h), st=new Int32Array(w*h); let sp=0;
+  for(let i=0;i<nms.length;i++){
+    if(nms[i]>=hi&&!out[i]&&!(skip&&skip[i])){
+      out[i]=1; st[sp++]=i;
+      while(sp){ const p=st[--sp], x=p%w;
+        for(let dy=-w;dy<=w;dy+=w) for(let dx=-1;dx<=1;dx++){
+          if((dx<0&&x===0)||(dx>0&&x===w-1)) continue;
+          const j=p+dy+dx; if(j<0||j>=nms.length||out[j]) continue;
+          if(nms[j]>=lo&&!(skip&&skip[j])){ out[j]=1; st[sp++]=j; }
+        } }
+    }
+  }
+  return out;
+}
+function bgMaskOf(L,w,h,tol){
+  const border=[];
+  for(let x=0;x<w;x++) border.push(L[x],L[(h-1)*w+x]);
+  for(let y=0;y<h;y++) border.push(L[y*w],L[y*w+w-1]);
+  border.sort((a,b)=>a-b); const bv=border[border.length>>1];
+  const m=new Uint8Array(w*h), st=new Int32Array(w*h); let sp=0;
+  const push=i=>{ if(!m[i]&&Math.abs(L[i]-bv)<=tol){ m[i]=1; st[sp++]=i; } };
+  for(let x=0;x<w;x++){ push(x); push((h-1)*w+x); }
+  for(let y=0;y<h;y++){ push(y*w); push(y*w+w-1); }
+  while(sp){ const i=st[--sp], x=i%w;
+    if(x>0) push(i-1); if(x<w-1) push(i+1); if(i>=w) push(i-w); if(i<w*(h-1)) push(i+w); }
+  return m;
+}
+function otsu(L,skip){
+  const hist=new Float64Array(256); let n=0;
+  for(let i=0;i<L.length;i++){ if(skip&&skip[i]) continue; hist[L[i]|0]++; n++; }
+  if(!n) return 128;
+  let sum=0; for(let t=0;t<256;t++) sum+=t*hist[t];
+  let sB=0,wB=0,best=0,th=128;
+  for(let t=0;t<256;t++){ wB+=hist[t]; if(!wB) continue; const wF=n-wB; if(!wF) break;
+    sB+=t*hist[t]; const mB=sB/wB, mF=(sum-sB)/wF, v=wB*wF*(mB-mF)*(mB-mF); if(v>best){best=v;th=t;} }
+  return th+0.5;
+}
+function morphSquare(m,w,h,r,erode){
+  if(r<1) return m.slice();
+  const t=new Uint8Array(w*h), o=new Uint8Array(w*h), pre=new Int32Array(Math.max(w,h)+1);
+  for(let y=0;y<h;y++){ const off=y*w;
+    for(let x=0;x<w;x++) pre[x+1]=pre[x]+m[off+x];
+    for(let x=0;x<w;x++){ const a=Math.max(0,x-r), b=Math.min(w-1,x+r), c=pre[b+1]-pre[a]; t[off+x]=erode?(c===b-a+1?1:0):(c>0?1:0); } }
+  for(let x=0;x<w;x++){
+    for(let y=0;y<h;y++) pre[y+1]=pre[y]+t[y*w+x];
+    for(let y=0;y<h;y++){ const a=Math.max(0,y-r), b=Math.min(h-1,y+r), c=pre[b+1]-pre[a]; o[y*w+x]=erode?(c===b-a+1?1:0):(c>0?1:0); } }
+  return o;
+}
+function dilateDisk(m,w,h,r){
+  const R=Math.ceil(r), offs=[];
+  for(let dy=-R;dy<=R;dy++) for(let dx=-R;dx<=R;dx++) if(dx*dx+dy*dy<=r*r+0.3) offs.push(dx,dy);
+  const o=new Uint8Array(w*h);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    if(!m[y*w+x]) continue;
+    for(let k=0;k<offs.length;k+=2){ const X=x+offs[k], Y=y+offs[k+1]; if(X>=0&&X<w&&Y>=0&&Y<h) o[Y*w+X]=1; } }
+  return o;
+}
+function removeSpecks(m,w,h,min){
+  if(min<2) return m;
+  const seen=new Uint8Array(w*h), st=new Int32Array(w*h), comp=new Int32Array(w*h);
+  for(let i=0;i<m.length;i++){
+    if(!m[i]||seen[i]) continue;
+    let sp=0,cn=0; st[sp++]=i; seen[i]=1;
+    while(sp){ const p=st[--sp]; comp[cn++]=p; const x=p%w;
+      for(let dy=-w;dy<=w;dy+=w) for(let dx=-1;dx<=1;dx++){
+        if((dx<0&&x===0)||(dx>0&&x===w-1)) continue;
+        const j=p+dy+dx; if(j>=0&&j<m.length&&m[j]&&!seen[j]){ seen[j]=1; st[sp++]=j; } } }
+    if(cn<min) for(let k=0;k<cn;k++) m[comp[k]]=0;
+  }
+  return m;
+}
+function modeFilter(a,w,h,iter){
+  const cnt=new Uint16Array(8);
+  for(let it=0;it<iter;it++){
+    const b=a.slice();
+    for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
+      const i=y*w+x;
+      for(let dy=-w;dy<=w;dy+=w) for(let dx=-1;dx<=1;dx++) cnt[a[i+dy+dx]]++;
+      let best=a[i], bc=cnt[best];
+      for(let k=0;k<8;k++) if(cnt[k]>bc){bc=cnt[k];best=k;}
+      b[i]=best;
+      for(let dy=-w;dy<=w;dy+=w) for(let dx=-1;dx<=1;dx++) cnt[a[i+dy+dx]]=0;
+    }
+    a=b;
+  }
+  return a;
+}
+/* Marching squares: smooth sub-pixel iso-contours, chained into polylines */
+function isolines(F,w,h,t,skip){
+  const HN=w*h, segA=[], segB=[], ept=new Map();
+  const eH=(x,y)=>{ const id=y*w+x; if(!ept.has(id)){ const a=F[id], b=F[id+1]; ept.set(id,[x+(t-a)/(b-a)+0.5, y+0.5]); } return id; };
+  const eV=(x,y)=>{ const id=HN+y*w+x; if(!ept.has(id)){ const a=F[y*w+x], d=F[(y+1)*w+x]; ept.set(id,[x+0.5, y+(t-a)/(d-a)+0.5]); } return id; };
+  const add=(p,q)=>{ segA.push(p); segB.push(q); };
+  for(let y=0;y<h-1;y++) for(let x=0;x<w-1;x++){
+    const i=y*w+x;
+    if(skip&&(skip[i]||skip[i+1]||skip[i+w]||skip[i+w+1])) continue;
+    const a=F[i], b=F[i+1], c=F[i+w+1], d=F[i+w];
+    const idx=(a>=t?8:0)|(b>=t?4:0)|(c>=t?2:0)|(d>=t?1:0);
+    if(idx===0||idx===15) continue;
+    switch(idx){
+      case 1: case 14: add(eV(x,y),eH(x,y+1)); break;
+      case 2: case 13: add(eH(x,y+1),eV(x+1,y)); break;
+      case 3: case 12: add(eV(x,y),eV(x+1,y)); break;
+      case 4: case 11: add(eH(x,y),eV(x+1,y)); break;
+      case 6: case 9:  add(eH(x,y),eH(x,y+1)); break;
+      case 7: case 8:  add(eH(x,y),eV(x,y)); break;
+      case 5: if((a+b+c+d)/4>=t){ add(eH(x,y),eV(x,y)); add(eH(x,y+1),eV(x+1,y)); } else { add(eH(x,y),eV(x+1,y)); add(eV(x,y),eH(x,y+1)); } break;
+      case 10: if((a+b+c+d)/4>=t){ add(eH(x,y),eV(x+1,y)); add(eV(x,y),eH(x,y+1)); } else { add(eH(x,y),eV(x,y)); add(eH(x,y+1),eV(x+1,y)); } break;
+    }
+  }
+  const nS=segA.length, adj=new Map();
+  for(let s=0;s<nS;s++) for(const e of [segA[s],segB[s]]){ const v=adj.get(e); if(v===undefined) adj.set(e,[s]); else v.push(s); }
+  const used=new Uint8Array(nS), polys=[];
+  const walk=(start,out)=>{ let cur=start;
+    for(;;){ const list=adj.get(cur); let nx=-1; for(const q of list) if(!used[q]){nx=q;break;} if(nx<0) break;
+      used[nx]=1; const other=segA[nx]===cur?segB[nx]:segA[nx]; out.push(other); cur=other; } };
+  for(let s0=0;s0<nS;s0++){
+    if(used[s0]) continue; used[s0]=1;
+    const fwd=[segA[s0],segB[s0]]; walk(segB[s0],fwd);
+    const back=[]; walk(segA[s0],back);
+    const edges=back.reverse().concat(fwd);
+    const closed=edges.length>3&&edges[0]===edges[edges.length-1];
+    const m=closed?edges.length-1:edges.length, pts=new Array(m*2);
+    for(let k=0;k<m;k++){ const p=ept.get(edges[k]); pts[2*k]=p[0]; pts[2*k+1]=p[1]; }
+    polys.push({pts,closed});
+  }
+  return polys;
+}
+function polyLen(p,closed){ let L=0; const n=p.length/2; for(let i=1;i<n;i++) L+=Math.hypot(p[2*i]-p[2*i-2],p[2*i+1]-p[2*i-1]); if(closed&&n>1) L+=Math.hypot(p[0]-p[2*n-2],p[1]-p[2*n-1]); return L; }
+function decimate(p,d){ const o=[p[0],p[1]]; let lx=p[0],ly=p[1]; const n=p.length/2;
+  for(let i=1;i<n;i++){ const x=p[2*i],y=p[2*i+1]; if(Math.hypot(x-lx,y-ly)>=d||i===n-1){ o.push(x,y); lx=x; ly=y; } } return o; }
+function chaikin(p,closed,iter){
+  for(let it=0;it<iter;it++){
+    const n=p.length/2; if(n<3) break; const o=[];
+    if(!closed) o.push(p[0],p[1]);
+    const m=closed?n:n-1;
+    for(let i=0;i<m;i++){ const j=(i+1)%n, x0=p[2*i],y0=p[2*i+1],x1=p[2*j],y1=p[2*j+1];
+      o.push(.75*x0+.25*x1,.75*y0+.25*y1,.25*x0+.75*x1,.25*y0+.75*y1); }
+    if(!closed) o.push(p[2*(n-1)],p[2*(n-1)+1]);
+    p=o;
+  }
+  return p;
+}
+function linework(L,w,h,s,bg){
+  const n=w*h, t=P.threshAuto?otsu(L,bg):P.thresh, B=new Uint8Array(n);
+  for(let i=0;i<n;i++) B[i]=(!(bg&&bg[i])&&L[i]<t)?1:0;
+  removeSpecks(B,w,h,Math.round(P.speck*s*s));
+  let out;
+  if(P.fill>0){
+    const r=Math.max(1,Math.round(P.fill*s));
+    const F=morphSquare(morphSquare(B,w,h,r,true),w,h,r,false);
+    out=new Uint8Array(n);
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+      const i=y*w+x;
+      if(F[i]){ if(x===0||y===0||x===w-1||y===h-1||!F[i-1]||!F[i+1]||!F[i-w]||!F[i+w]) out[i]=1; }
+      else if(B[i]) out[i]=1;
+    }
+  } else out=B.slice();
+  if(P.detail>0){
+    const sb=sobel(L,w,h), hi=pct(sb.mag,1-(0.005+P.detail/100*0.1),bg);
+    const e=canny(sb,w,h,hi,hi*0.5,bg), near=morphSquare(B,w,h,Math.max(1,Math.round(3*s)),false);
+    for(let i=0;i<n;i++) if(e[i]&&!near[i]) out[i]=1;
+  }
+  return removeSpecks(out,w,h,Math.round(P.speck*s*s*0.6));
+}
+function tonal(L,w,h,s,bg,ppmm,res){
+  const n=w*h, N=P.levels;
+  const lo=pct(L,0.02,bg), hi=pct(L,0.98,bg), span=Math.max(1,hi-lo);
+  let Lv=new Uint8Array(n);
+  for(let i=0;i<n;i++){ if(bg&&bg[i]){ Lv[i]=N; continue; } const v=Math.floor((L[i]-lo)/span*N); Lv[i]=v<0?0:v>N-1?N-1:v; }
+  Lv=modeFilter(Lv,w,h,1+Math.round(s));
+  const sb=sobel(L,w,h);
+  const minLen=Math.max(6,Math.sqrt(P.speck)*s*3), dec=Math.max(1.5,0.25*ppmm);
+  const raw=[];
+  for(let k=1;k<N;k++){
+    for(const p of isolines(L,w,h,lo+span*k/N,bg)){ if(polyLen(p.pts,p.closed)>=minLen) raw.push({pts:chaikin(decimate(p.pts,dec),p.closed,2),closed:p.closed,subject:false}); }
+  }
+  if(bg){
+    const f=new Float32Array(n); for(let i=0;i<n;i++) f[i]=bg[i]?0:1;
+    const fb=blur(f,w,h,Math.max(1,s*1.2));
+    for(const p of isolines(fb,w,h,0.5,null)){ if(polyLen(p.pts,p.closed)>=minLen) raw.push({pts:chaikin(decimate(p.pts,dec),p.closed,2),closed:p.closed,subject:true}); }
+  }
+  /* Edge hardness: compare only against other contour points (fix 1) */
+  const mags=[];
+  const magAt=(x,y)=>sb.mag[Math.min(h-1,Math.max(0,Math.round(y-0.5)))*w+Math.min(w-1,Math.max(0,Math.round(x-0.5)))];
+  for(const p of raw) if(!p.subject) for(let i=0;i<p.pts.length;i+=2) mags.push(magAt(p.pts[i],p.pts[i+1]));
+  mags.sort((a,b)=>a-b);
+  const hT=mags.length?mags[Math.min(mags.length-1,Math.floor(mags.length*P.hardness/100))]:0;
+  for(const p of raw){
+    const np=p.pts.length/2;
+    if(p.subject||!P.dashed||P.hardness<=0){ res.paths.push({pts:p.pts,closed:p.closed,dashed:false}); continue; }
+    const hard=new Uint8Array(np); for(let i=0;i<np;i++) hard[i]=magAt(p.pts[2*i],p.pts[2*i+1])>=hT?1:0;
+    const sm=new Uint8Array(np), W=3;
+    for(let i=0;i<np;i++){ let c=0,t=0; for(let k=-W;k<=W;k++){ let j=i+k; if(p.closed) j=(j+np)%np; else if(j<0||j>=np) continue; c+=hard[j]; t++; } sm[i]=c*2>=t?1:0; }
+    let start=0;
+    for(let i=1;i<=np;i++){
+      if(i===np||sm[i]!==sm[start]){
+        const end=Math.min(np-1,i), seg=p.pts.slice(2*start,2*end+2);
+        if(seg.length>=4) res.paths.push({pts:seg,closed:p.closed&&start===0&&i===np,dashed:!sm[start]});
+        start=i;
+      }
+    }
+  }
+  /* Raster extras: fine detail, solid black marks */
+  const mask=new Uint8Array(n);
+  if(P.detail>0){
+    const bnd=new Uint8Array(n);
+    for(let y=0;y<h-1;y++) for(let x=0;x<w-1;x++){ const i=y*w+x; if(Lv[i]!==Lv[i+1]||Lv[i]!==Lv[i+w]) bnd[i]=1; }
+    const near=morphSquare(bnd,w,h,Math.max(1,Math.round(2*s)),false);
+    const hi2=pct(sb.mag,1-(0.01+P.detail/100*0.12),bg), e=canny(sb,w,h,hi2,hi2*0.5,bg);
+    for(let i=0;i<n;i++) if(e[i]&&!near[i]) mask[i]=1;
+    removeSpecks(mask,w,h,Math.round(P.speck*s*s));
+  }
+  if(P.hatch){
+    const sp=Math.max(5,Math.round(2.2*ppmm));
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=y*w+x; if(Lv[i]===0&&(x+y)%sp===0) mask[i]=1; }
+  }
+  res.mask=mask;
+  if(P.highlights){
+    const tgt=N-1, seen=new Uint8Array(n), st=new Int32Array(n), minA=Math.max(12,40*s*s), maxA=0.03*n, found=[];
+    for(let i=0;i<n;i++){
+      if(Lv[i]!==tgt||seen[i]) continue;
+      let sp=0,c=0,sx=0,sy=0; st[sp++]=i; seen[i]=1;
+      while(sp){ const p=st[--sp], x=p%w, y=(p/w)|0; c++; sx+=x; sy+=y;
+        if(x>0&&Lv[p-1]===tgt&&!seen[p-1]){seen[p-1]=1;st[sp++]=p-1;}
+        if(x<w-1&&Lv[p+1]===tgt&&!seen[p+1]){seen[p+1]=1;st[sp++]=p+1;}
+        if(y>0&&Lv[p-w]===tgt&&!seen[p-w]){seen[p-w]=1;st[sp++]=p-w;}
+        if(y<h-1&&Lv[p+w]===tgt&&!seen[p+w]){seen[p+w]=1;st[sp++]=p+w;} }
+      if(c>=minA&&c<=maxA) found.push({x:sx/c,y:sy/c,n:c});
+    }
+    found.sort((a,b)=>b.n-a.n);
+    const R=Math.max(2.5,0.9*ppmm);
+    for(const f of found.slice(0,80)){ const cx=Math.round(f.x), cy=Math.round(f.y); if(Lv[cy*w+cx]===tgt) res.rings.push({x:cx+0.5,y:cy+0.5,r:R}); }
+  }
+}
+function smoothMask(m,w,h,sigma){
+  const f=new Float32Array(m.length); for(let i=0;i<m.length;i++) f[i]=m[i];
+  const b=blur(f,w,h,sigma), o=new Uint8Array(m.length);
+  for(let i=0;i<m.length;i++) o[i]=b[i]>=0.45?1:0;
+  return o;
+}
+/* All sizes are physical (fix 2): s = pixels per 0.1 mm, so preview and export match */
+function processImg(longSide){
+  const pr=prep(longSide), w=pr.w, h=pr.h, ppmm=w/(P.widthIn*25.4), s=ppmm/10;
+  const L=blur(pr.L,w,h,s*(0.5+P.smooth*0.7));
+  const bg=P.bgRemove?bgMaskOf(L,w,h,P.bgTol):null;
+  const res={w,h,ppmm,mask:null,paths:[],rings:[]};
+  if(S.mode==="line") res.mask=linework(L,w,h,s,bg); else tonal(L,w,h,s,bg,ppmm,res);
+  if(res.mask){
+    const lw=P.weight*ppmm, r=(lw-1)/2;
+    if(r>0.3) res.mask=dilateDisk(res.mask,w,h,r);
+    if(lw>=3) res.mask=smoothMask(res.mask,w,h,0.25*lw);
+  }
+  return res;
+}
+
+/* ---------- Rendering ---------- */
+function buildBase(res){
+  const c=document.createElement("canvas"); c.width=res.w; c.height=res.h;
+  const x=c.getContext("2d");
+  if(res.mask){ const id=x.createImageData(res.w,res.h), d=id.data, m=res.mask; for(let i=0,j=3;i<m.length;i++,j+=4) if(m[i]) d[j]=255; x.putImageData(id,0,0); }
+  x.strokeStyle="#000"; x.lineWidth=Math.max(1,P.weight*res.ppmm); x.lineCap="round"; x.lineJoin="round";
+  const on=1.5*res.ppmm, off=1.1*res.ppmm;
+  for(const p of res.paths){
+    x.setLineDash(p.dashed?[on,off]:[]); x.beginPath();
+    const a=p.pts; x.moveTo(a[0],a[1]); for(let k=2;k<a.length;k+=2) x.lineTo(a[k],a[k+1]);
+    if(p.closed) x.closePath(); x.stroke();
+  }
+  x.setLineDash([]);
+  for(const r of res.rings){ x.beginPath(); x.arc(r.x,r.y,r.r,0,Math.PI*2); x.stroke(); }
+  return c;
+}
+function renderPreview(){
+  if(!S.res||!S.base||S.cropping) return;
+  const res=S.res;
+  if(view.width!==res.w||view.height!==res.h){ view.width=res.w; view.height=res.h; }
+  const lay=document.createElement("canvas"); lay.width=res.w; lay.height=res.h;
+  const lx=lay.getContext("2d"); lx.drawImage(S.base,0,0); drawEdits(lx,res);
+  const ov=P.overlay>0;
+  if(ov){ lx.globalCompositeOperation="source-in"; lx.fillStyle="rgb(74,46,200)"; lx.fillRect(0,0,res.w,res.h); lx.globalCompositeOperation="source-over"; }
+  const x=view.getContext("2d"); x.setTransform(1,0,0,1,0,0); x.fillStyle="#fff"; x.fillRect(0,0,res.w,res.h);
+  x.save(); if(P.mirror){ x.translate(res.w,0); x.scale(-1,1); }
+  if(ov){ x.globalAlpha=P.overlay/100; x.drawImage(S.src,0,0,res.w,res.h); x.globalAlpha=1; }
+  x.drawImage(lay,0,0); x.restore();
+  fitCanvas(res.w,res.h);
+}
+
+/* ---------- Export ---------- */
+let DL=null;
+(async()=>{ try{ if(window.claude&&typeof window.claude.use==="function") DL=await window.claude.use("downloads"); }catch(e){ DL=null; } })();
+function toBlob(c,type,q){ return new Promise(r=>c.toBlob(r,type,q)); }
+function binarize(c){
+  const x=c.getContext("2d"), id=x.getImageData(0,0,c.width,c.height), d=id.data;
+  for(let j=0;j<d.length;j+=4){ const v=(d[j]+d[j+1]+d[j+2])/3<128?0:255; d[j]=d[j+1]=d[j+2]=v; d[j+3]=255; }
+  x.putImageData(id,0,0);
+}
+function withCheckBar(c,dpi){
+  const W=Math.max(c.width,Math.round(1.6*dpi)), extra=Math.round(0.6*dpi);
+  const o=document.createElement("canvas"); o.width=W; o.height=c.height+extra;
+  const x=o.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,W,o.height); x.drawImage(c,0,0);
+  const x0=Math.round(0.25*dpi), y=c.height+Math.round(0.22*dpi), lw=Math.max(2,Math.round(dpi/90)), tk=Math.round(0.06*dpi);
+  x.strokeStyle="#000"; x.lineWidth=lw; x.beginPath();
+  x.moveTo(x0,y); x.lineTo(x0+dpi,y); x.moveTo(x0,y-tk); x.lineTo(x0,y+tk); x.moveTo(x0+dpi,y-tk); x.lineTo(x0+dpi,y+tk); x.stroke();
+  x.fillStyle="#000"; x.font=`${Math.round(0.1*dpi)}px Helvetica, Arial, sans-serif`; x.textBaseline="top";
+  x.fillText("1 inch. Print at 100%.",x0,y+tk+Math.round(0.04*dpi));
+  return o;
+}
+const CRC_T=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(b){ let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC_T[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function insertPHYs(png,dpi){
+  const ppm=Math.round(dpi/0.0254), ch=new Uint8Array(21), dv=new DataView(ch.buffer);
+  dv.setUint32(0,9); ch.set([0x70,0x48,0x59,0x73],4); dv.setUint32(8,ppm); dv.setUint32(12,ppm); ch[16]=1;
+  dv.setUint32(17,crc32(ch.subarray(4,17)));
+  const at=33, out=new Uint8Array(png.length+21);
+  out.set(png.subarray(0,at),0); out.set(ch,at); out.set(png.subarray(at),at+21);
+  return out;
+}
+async function exportFile(kind){
+  if(!S.src||S.cropping) return;
+  setBusy(true); await new Promise(r=>setTimeout(r,30));
+  try{
+    const d=dims(), long=Math.min(2700,Math.round(Math.max(d.wIn,d.hIn)*300));
+    const res=processImg(long), lay=buildBase(res); drawEdits(lay.getContext("2d"),res);
+    const c=document.createElement("canvas"); c.width=res.w; c.height=res.h;
+    const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,res.w,res.h);
+    x.save(); if(P.mirror){ x.translate(res.w,0); x.scale(-1,1); } x.drawImage(lay,0,0); x.restore();
+    binarize(c);
+    const dpi=res.w/d.wIn, base=`stencil-${NAMES[S.mode].toLowerCase()}-${d.wIn}in`;
+    if(kind==="png"){
+      const out=P.checkBar?withCheckBar(c,dpi):c;
+      const raw=new Uint8Array(await (await toBlob(out,"image/png")).arrayBuffer());
+      const blob=new Blob([insertPHYs(raw,dpi)],{type:"image/png"});
+      await deliver(blob,base+".png",blob);
+    } else {
+      const jpg=new Uint8Array(await (await toBlob(c,"image/jpeg",0.95)).arrayBuffer());
+      await deliver(makePDF(jpg,res.w,res.h,d.wIn,d.hIn),base+".pdf",await toBlob(c,"image/png"));
+    }
+  }catch(err){ console.error(err); toast("Export failed. Try a smaller width."); }
+  setBusy(false);
+}
+async function deliver(blob,name,previewBlob){
+  if(DL){
+    try{ await DL.save({filename:name,data:blob}); toast("Saved"); return; }
+    catch(e){ if(e&&e.code==="declined"){ toast("Save canceled"); return; } if(e&&e.code==="rate_limited"){ toast("A save is already open."); return; } }
+  }
+  try{
+    const file=new File([blob],name,{type:blob.type});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; }
+  }catch(e){ if(e&&e.name==="AbortError") return; }
+  $("#modalImg").src=URL.createObjectURL(previewBlob);
+  $("#modalNote").textContent=name.endsWith(".pdf")
+    ? "The PDF couldn’t be saved here. Press and hold the image to save it instead. Printed from Photos, size isn’t guaranteed."
+    : "Press and hold the image, then choose Save to Photos or Share.";
+  $("#modal").classList.remove("hidden"); $("#modalClose").focus();
+}
+$("#modalClose").addEventListener("click",()=>$("#modal").classList.add("hidden"));
+$("#savePng").addEventListener("click",()=>exportFile("png"));
+$("#savePdf").addEventListener("click",()=>exportFile("pdf"));
+function makePDF(jpg,pxW,pxH,inW,inH){
+  const fits=(a,b)=>inW<=a-0.5&&inH<=b-0.8;
+  let pw=8.5, ph=11;
+  if(!fits(8.5,11)){ if(fits(11,8.5)){pw=11;ph=8.5;} else if(fits(11,17)){pw=11;ph=17;} else if(fits(17,11)){pw=17;ph=11;} else {pw=Math.max(inW+1,8.5);ph=Math.max(inH+1.3,11);} }
+  const W=pw*72, H=ph*72, iw=inW*72, ih=inH*72, x=(W-iw)/2, y=(H-ih)/2+10;
+  const enc=new TextEncoder(), parts=[], off=[]; let len=0;
+  const add=b=>{ if(typeof b==="string") b=enc.encode(b); parts.push(b); len+=b.length; };
+  const label=`Stencil ${inW.toFixed(2)} x ${inH.toFixed(2)} in. Print at 100% / Actual Size. Check: this bar is 1 inch.`;
+  const content=`q ${iw.toFixed(2)} 0 0 ${ih.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)} cm /Im0 Do Q\n`+
+    `0 0 0 RG 1 w 36 30 m 108 30 l S 36 26 m 36 34 l S 108 26 m 108 34 l S\n`+
+    `BT /F1 9 Tf 118 27 Td (${label}) Tj ET\n`;
+  add("%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n");
+  off[1]=len; add("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  off[2]=len; add("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+  off[3]=len; add(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> /Font << /F1 6 0 R >> >> /Contents 5 0 R >>\nendobj\n`);
+  off[4]=len; add(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${pxW} /Height ${pxH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`); add(jpg); add("\nendstream\nendobj\n");
+  const cb=enc.encode(content);
+  off[5]=len; add(`5 0 obj\n<< /Length ${cb.length} >>\nstream\n`); add(cb); add("endstream\nendobj\n");
+  off[6]=len; add("6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n");
+  const xref=len; let t="xref\n0 7\n0000000000 65535 f \n";
+  for(let i=1;i<=6;i++) t+=String(off[i]).padStart(10,"0")+" 00000 n \n";
+  t+=`trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`; add(t);
+  return new Blob(parts,{type:"application/pdf"});
+}
+
+/* ---------- Init ---------- */
+loadStore();
+buildControls();
+Object.assign(P,MP.line);
+$("#widthIn").value=P.widthIn;
+syncControls();
+})();
+</script>
+</body>
+</html>
